@@ -5,6 +5,9 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
 
     private val radiusSq = radius * radius
 
+    override fun toString(): String {
+        return "F: $start, B:$end r:$radius"
+    }
     // https://lukeplant.me.uk/blog/posts/check-if-a-point-is-in-a-cylinder-geometry-and-code/
     fun contains(point: PointVector) : Boolean {
         var cylinderDirection = end - start
@@ -42,6 +45,10 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
         return true
     }
 
+    private fun length(): Double {
+        return (start-end).abs()
+    }
+
     /**
      * Описана сфера
      */
@@ -54,6 +61,26 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
      */
     fun toBoundedSphere(): Sphere {
         return Sphere((start + end) * 0.5, radius)
+    }
+
+
+    fun getWorkingZone(fMin: Double, fMax: Double, rFoc: Double): Cylinder {
+        var laserDirection = start - end
+        var normalizedDirection = laserDirection / laserDirection.abs()
+        return Cylinder(
+            start + (normalizedDirection) * fMax,
+            start + (normalizedDirection) * fMin,
+            rFoc)
+    }
+
+    private fun getManipulator(fMin: Double, length: Double, radius: Double): Any {
+        var laserDirection = start - end
+        var normalizedDirection = laserDirection / laserDirection.abs()
+
+        return Cylinder(
+            end - (normalizedDirection) * fMin,
+            end - (normalizedDirection) * (fMin+length),
+            radius)
     }
 
     companion object {
@@ -84,5 +111,16 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             var zeroCylinder = Cylinder(PointVector(1.0, 0.0, 0.0), PointVector(1.0, 0.0, 0.0), 0.5)
             assert(!zeroCylinder.contains(PointVector(1.0, 0.0, 0.0)))
         }
+
+        @Test
+        fun workingZoneTest() {
+            val manipulator = Cylinder(PointVector(0.0, 0.0, 0.0), PointVector(10.0, 0.0, 0.0), 0.5)
+            val laser = manipulator.getWorkingZone(3.0, 5.0, 0.2);
+            var fromLaser = laser.getManipulator(3.0, manipulator.length(), manipulator.radius)
+
+            assert(manipulator == fromLaser)
+        }
+
     }
+
 }

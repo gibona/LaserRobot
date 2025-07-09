@@ -35,6 +35,9 @@ data class PointVector(val x: Double, val y: Double, val z: Double) {
         return x*x + y*y + z*z
     }
 
+    operator fun div(div: Double): PointVector {
+        return this * (1 / div)
+    }
 
     companion object {
         fun readFromScanner(scanner: Scanner): PointVector {
