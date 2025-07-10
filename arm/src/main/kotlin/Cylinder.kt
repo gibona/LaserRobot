@@ -1,15 +1,17 @@
 import org.testng.annotations.Test
 import kotlin.math.sqrt
 
-data class Cylinder (val start:PointVector, val end: PointVector, val radius: Double) {
+data class Cylinder (val start:PointVector, val end: PointVector, val radius: Double): Containable {
 
-    private val radiusSq = radius * radius
+    private val radiusSq: Double by lazy { radius * radius }
+    private val height: Double by lazy { (start - end).abs() }
+    val centerPoint: PointVector by lazy { (start + end) / 2.0 }
 
     override fun toString(): String {
         return "F: $start, B:$end r:$radius"
     }
     // https://lukeplant.me.uk/blog/posts/check-if-a-point-is-in-a-cylinder-geometry-and-code/
-    fun contains(point: PointVector) : Boolean {
+    override fun contains(point: PointVector) : Boolean {
         var cylinderDirection = end - start
         var cylinderDirectionLength = cylinderDirection.abs()
         if (cylinderDirectionLength == 0.0)
@@ -49,6 +51,12 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
         return (start-end).abs()
     }
 
+    fun parallelTo(another: Cylinder) : Boolean {
+        val direction = start - end
+        val anotherDirection = another.start - end
+        val crossProduct = PointVector.crossProduct(direction, anotherDirection)
+        return crossProduct.absSq() == 0.0
+    }
     /**
      * Описана сфера
      */
@@ -64,7 +72,7 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
     }
 
 
-    fun getWorkingZone(fMin: Double, fMax: Double, rFoc: Double): Cylinder {
+    fun getLaser(fMin: Double, fMax: Double, rFoc: Double): Cylinder {
         var laserDirection = start - end
         var normalizedDirection = laserDirection / laserDirection.abs()
         return Cylinder(
@@ -73,7 +81,7 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             rFoc)
     }
 
-    private fun getManipulator(fMin: Double, length: Double, radius: Double): Any {
+    fun getManipulator(fMin: Double, length: Double, radius: Double): Cylinder {
         var laserDirection = start - end
         var normalizedDirection = laserDirection / laserDirection.abs()
 
@@ -81,6 +89,14 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             end - (normalizedDirection) * fMin,
             end - (normalizedDirection) * (fMin+length),
             radius)
+    }
+
+    fun height(): Double {
+        return height
+    }
+
+    fun inWorkingArea(rMin: Double, rMax: Double): Boolean {
+        return centerPoint.absSq() in rMin*rMin .. rMax*rMax
     }
 
     companion object {
@@ -115,10 +131,23 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
         @Test
         fun workingZoneTest() {
             val manipulator = Cylinder(PointVector(0.0, 0.0, 0.0), PointVector(10.0, 0.0, 0.0), 0.5)
-            val laser = manipulator.getWorkingZone(3.0, 5.0, 0.2);
+            val laser = manipulator.getLaser(3.0, 5.0, 0.2);
             var fromLaser = laser.getManipulator(3.0, manipulator.length(), manipulator.radius)
 
             assert(manipulator == fromLaser)
+        }
+
+        @Test
+        fun testParallel() {
+            val manipulator = Cylinder(PointVector(Math.random(), Math.random(), Math.random()), PointVector(Math.random(), Math.random(), Math.random()), 0.5)
+            var fMin = Math.random()
+            val laser = manipulator.getLaser(fMin, 5.0, 0.2);
+            var fromLaser = laser.getManipulator(fMin, manipulator.length(), manipulator.radius)
+
+            assert(manipulator.parallelTo(laser))
+            assert(fromLaser.parallelTo(laser))
+            assert(laser.parallelTo(fromLaser))
+            assert(manipulator.parallelTo(fromLaser))
         }
 
     }

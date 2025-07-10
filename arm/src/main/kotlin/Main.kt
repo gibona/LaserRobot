@@ -1,6 +1,8 @@
 import java.io.*
 import java.util.*
+import kotlin.collections.ArrayList
 
+const val EPS = 0.0001
 fun log(string : String) {
     //System.out.println(string)
 }
@@ -61,6 +63,7 @@ fun readInputFast() {
 
     val pointF = PointVector.read(input)
     val pointB = PointVector.read(input)
+    val manipulator = Cylinder(pointF, pointB, rInst)
     log("F:$pointF, B:$pointB")
 
     line = readNextLineAndSplit(input)
@@ -69,31 +72,90 @@ fun readInputFast() {
     var nB = line[2].toInt()
     log("nU:$nU, nW:$nW, nB:$nB")
 
-    val uPointVectors = PointVector.readMultiple(input, nU)
-    val wPointVectors = PointVector.readMultiple(input, nW)
-    val bPointVectors = PointVector.readMultiple(input, nB)
+    val uPoints = PointVector.readMultiple(input, nU) // полезно разстение
+    val wPoints = PointVector.readMultiple(input, nW) // плевел
+    val bPoints = PointVector.readMultiple(input, nB) // камък
+
+    val pointsCloud = PointsCloud(uPoints, wPoints, bPoints)
 
     var t2 = System.currentTimeMillis();
     System.out.println("reading:" + (t2 - t1))
 
-    val robot =  Cylinder(pointF, pointB, rInst)
-    var workingZone = robot.getWorkingZone(fMin, fMax, rFoc)
+    var wRemainingPoints = ArrayList<PointVector>(wPoints) // copy points
 
-    var wSphere = Sphere.fromPoints(wPointVectors, 0.5)
-    System.out.println("wS: $wSphere" + wSphere.countInside(wPointVectors))
-    wSphere = Sphere.fromPoints(wPointVectors, rFoc)
-    System.out.println("wS: $wSphere" + wSphere.countInside(wPointVectors))
-    var t3 = System.currentTimeMillis();
-    System.out.println("reading:" + (t3 - t2))
+    while(wRemainingPoints.isNotEmpty()) {
+        var potentialTarget = Sphere.fromPoints(wRemainingPoints, rFoc) // опитваме се да групираме плевели в сфера и да го облъчим
+        if (potentialTarget.contains(uPoints)) { // има полезни разстения в сферата - не става за облъчване
+            potentialTarget = Sphere(wRemainingPoints[0], EPS) // фокусираме се само на тази точка
+            if (potentialTarget.contains(uPoints)) { // няма как да я облъчим без да засегнем полезни разстения - махаме я
+                wRemainingPoints.removeAt(0)
+                continue;
+            }
+        }
 
-    var sphere3 = Sphere(PointVector(0.0,0.0,0.0), 5.0)
-    var cylinders = sphere3.generateFibonacciSphere(20.0, 500)
-    for(c in cylinders)
-        System.out.println("C:$c")
+        var bestTargetPoints = 0
+        var bestTrajectory: List<Cylinder>? = null
+        var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin)
+        for(laser in lasers) {
+            val harmPlants = laser.contains(uPoints)
+            if (harmPlants) // без да облъчваме разстения
+                continue
 
-    var t4 = System.currentTimeMillis();
-    System.out.println("reading:" + (t4 - t3))
+            val targetPoints = laser.countInside(wRemainingPoints)
+            if (bestTargetPoints > targetPoints) // вече сме намерили по-добра позиция
+                continue
 
+            var potentialManipulator = laser.getManipulator(fMin, manipulator.height(), manipulator.radius)
+            if ( !potentialManipulator.inWorkingArea(rMin, rMax)
+                || potentialManipulator.contains(pointsCloud)) // манипулатора засяга точкиплевел
+                continue
+
+            var trajectory = pointsCloud.calculateManipulatorTrajectory(manipulator, potentialManipulator)
+            if (trajectory != null)
+                if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
+                bestTrajectory = trajectory
+                bestTargetPoints = targetPoints
+            }
+        }
+
+        if(bestTrajectory.isNullOrEmpty()) { // няма как да стигнем до 0-левата точка
+            wRemainingPoints.removeAt(0)
+            continue
+        }
+
+        move(bestTrajectory)
+        var laser = bestTrajectory.last().getLaser(fMin, fMax, rFoc)
+
+
+        // TODO: Multithreading
+        wRemainingPoints = wRemainingPoints.filter { !laser.contains(it) } as ArrayList<PointVector>
+
+        fire(laser.getLaser(fMin, fMax, rFoc))
+
+    }
+
+
+}
+
+fun fire(l: Cylinder) {
+    var fire = "FIRE"
+    /*
+    fire = String.format("FIRE %.4f %.4f %.4f %.4f %.4f %.4f",
+        l.start.x, l.start.y, l.start.z,
+        l.end.x, l.end.y, l.end.z,
+    )
+     */
+    println(fire)
+}
+
+fun move(trajectory: List<Cylinder>) {
+    for (t in trajectory) {
+        val move = String.format("MOVE %.4f %.4f %.4f %.4f %.4f %.4f",
+            t.start.x, t.start.y, t.start.z,
+            t.end.x, t.end.y, t.end.z,
+        )
+        println(move)
+    }
 }
 
 fun main(args: Array<String>) {

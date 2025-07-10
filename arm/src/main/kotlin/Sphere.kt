@@ -3,44 +3,62 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-data class Sphere(val center: PointVector, val radius: Double) {
+data class Sphere(val center: PointVector, val radius: Double) : Containable {
     private val radiusSq = radius * radius
 
-    fun contains(point: PointVector) : Boolean {
+    override fun contains(point: PointVector) : Boolean {
         var distanceFromCenter = center - point
 
         log("" + distanceFromCenter.absSq() + " " + radiusSq)
         return distanceFromCenter.absSq() <= radiusSq
     }
 
-    fun countInside(points: ArrayList<PointVector>): Int {
-        var result = 0
-        for(p in points)
-            if(contains(p))
-                result++
-        return result
-    }
-
+    /**
+     * Генерира samples * 3 цилиндъра, които са разпраделени в 3 групи:
+     * 1. цилиндър с център съвпадащ със сферата
+     * 2. цилиндър, в който сферата е вписана до горния му край
+     * 3. цилиндър, в който сферата е вписана до долния му край
+     *
+     *
+     * тук може да се използва и по-оптимален метод - прави се плъзгащ се прозорец по точките и се отчита
+     * оптималното разположение, така че:
+     * 1. да има максимално плевели в зоната на лазера
+     * 2. лазера да не засяга полезни разстения
+     * 3. плевящия инструмент да не засяга камъни и полезни разстения
+     * точките се сортират по оста на двата цилиндъра и за всяко възможно пресичане
+     * (горна/долна част на цилиндър - лазер или плевящ инструмент) се пресмята колко е оптимална
+     */
     fun generateFibonacciSphere(cylynderHeight: Double, samples:Int = 1000) : ArrayList<Cylinder> {
-        var result = ArrayList<Cylinder>(samples)
+        var result = ArrayList<Cylinder>(samples*3)
 
         var phi = Math.PI * (sqrt(5.0) - 1.0)  // golden angle in radians
 
         for(i in 0 until samples) {
-            var y = 1 - (i / (samples - 1).toDouble()) * 2.0  // y goes from 1 to -1
-            var r = sqrt(1 - y * y)  // radius at y
+            val y = 1 - (i / (samples - 1).toDouble()) * 2.0  // y goes from 1 to -1
+            val r = sqrt(1 - y * y)  // radius at y
 
-            var theta = phi * i  // golden angle increment
+            val theta = phi * i  // golden angle increment
 
-            var x = cos(theta) * r
-            var z = sin(theta) * r
+            val x = cos(theta) * r
+            val z = sin(theta) * r
 
             var direction = PointVector(x, y, z)
-            var directionReal = (direction / direction.abs()) * (cylynderHeight / 2.0)
-            var start = center - directionReal
-            var end = center + directionReal
+            var directionReal = (direction / direction.abs())
 
-            result.add(Cylinder(start, end, radius))
+            result.add(Cylinder(
+                center - directionReal * (cylynderHeight - radius),
+                center + directionReal * (radius),
+                radius))
+
+            result.add(Cylinder(
+                center - directionReal * (cylynderHeight / 2.0),
+                center + directionReal * (cylynderHeight / 2.0),
+                radius))
+
+            result.add(Cylinder(
+                center - directionReal * (radius),
+                center + directionReal * (cylynderHeight - radius),
+                radius))
         }
 
         return result
@@ -68,16 +86,30 @@ data class Sphere(val center: PointVector, val radius: Double) {
             assert(!sphere1.contains(PointVector(-3.96, 4.16, 1.0)))
         }
 
+        @Test
+        fun testFibonacciSphere() {
+            val sphere = Sphere(PointVector(0.0,0.0,0.0), 2.0)
+            var cylinders = sphere.generateFibonacciSphere(5.0, 2)
+
+            assert(cylinders[0] == Cylinder(PointVector(0.0, -3.0, 0.0), PointVector(0.0, 2.0, 0.0), 2.0)) {cylinders[0]}
+            assert(cylinders[1] == Cylinder(PointVector(0.0, -2.5, 0.0), PointVector(0.0, 2.5, 0.0), 2.0)) {cylinders[1]}
+            assert(cylinders[2] == Cylinder(PointVector(0.0, -2.0, 0.0), PointVector(0.0, 3.0, 0.0), 2.0)) {cylinders[2]}
+
+            assert(cylinders[3] == Cylinder(PointVector(0.0, 3.0, 0.0), PointVector(0.0, -2.0, 0.0), 2.0)) {cylinders[3]}
+            assert(cylinders[4] == Cylinder(PointVector(0.0, 2.5, 0.0), PointVector(0.0, -2.5, 0.0), 2.0)) {cylinders[4]}
+            assert(cylinders[5] == Cylinder(PointVector(0.0, 2.0, 0.0), PointVector(0.0, -3.0, 0.0), 2.0)) {cylinders[5]}
+        }
+
         /**
          * Using Ritter algorithm
          * https://en.wikipedia.org/wiki/Bounding_sphere#Ritter's_bounding_sphere
          */
         fun fromPoints(wPointVectors: ArrayList<PointVector>, maximumRadius: Double): Sphere {
             if (wPointVectors.size == 0 )
-                return Sphere(PointVector(0.0, 0.0, 0.0), 0.0)
+                return Sphere(PointVector(0.0, 0.0, 0.0), EPS)
 
             if (wPointVectors.size == 1)
-                return Sphere(wPointVectors[0], 0.0)
+                return Sphere(wPointVectors[0], EPS)
 
             val maximumRadiusSq = maximumRadius * maximumRadius
             var p0 = wPointVectors[0];
@@ -92,7 +124,7 @@ data class Sphere(val center: PointVector, val radius: Double) {
                 }
             }
             if (p1 == null)
-                return Sphere(wPointVectors[0], 0.0)
+                return Sphere(wPointVectors[0], EPS)
 
             var p2: PointVector? = null
             // find point p2 farthest from p1, but not farther than maximumRadius
