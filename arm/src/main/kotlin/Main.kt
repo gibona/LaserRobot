@@ -5,6 +5,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
 const val EPS = 0.0001
+const val SAMPLES_FIBONACCI = 100
 fun log(string : String) {
     //System.out.println(string)
 }

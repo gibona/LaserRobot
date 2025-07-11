@@ -28,7 +28,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
      * точките се сортират по оста на двата цилиндъра и за всяко възможно пресичане
      * (горна/долна част на цилиндър - лазер или плевящ инструмент) се пресмята колко е оптимална
      */
-    fun generateFibonacciSphere(cylynderHeight: Double, samples:Int = 100) : ArrayList<Cylinder> {
+    fun generateFibonacciSphere(cylynderHeight: Double, samples:Int = SAMPLES_FIBONACCI) : ArrayList<Cylinder> {
         var result = ArrayList<Cylinder>(samples*3)
 
         var phi = Math.PI * (sqrt(5.0) - 1.0)  // golden angle in radians
