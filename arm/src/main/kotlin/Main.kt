@@ -79,7 +79,7 @@ fun readInputFast() {
     val pointsCloud = PointsCloud(uPoints, wPoints, bPoints)
 
     var t2 = System.currentTimeMillis();
-    System.out.println("reading:" + (t2 - t1))
+    //System.out.println("reading:" + (t2 - t1))
 
     var wRemainingPoints = ArrayList<PointVector>(wPoints) // copy points
 
@@ -96,7 +96,12 @@ fun readInputFast() {
         var bestTargetPoints = 0
         var bestTrajectory: List<Cylinder>? = null
         var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin)
+
+
         for(laser in lasers) {
+
+            //println("Laser cycle: $i")
+
             val harmPlants = laser.contains(uPoints)
             if (harmPlants) // без да облъчваме разстения
                 continue
@@ -113,12 +118,13 @@ fun readInputFast() {
             var trajectory = pointsCloud.calculateManipulatorTrajectory(manipulator, potentialManipulator)
             if (trajectory != null)
                 if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
-                bestTrajectory = trajectory
-                bestTargetPoints = targetPoints
-            }
+                    bestTrajectory = trajectory
+                    bestTargetPoints = targetPoints
+                }
         }
 
         if(bestTrajectory.isNullOrEmpty()) { // няма как да стигнем до 0-левата точка
+            println("Nema pat do ${wRemainingPoints[0]}")
             wRemainingPoints.removeAt(0)
             continue
         }
@@ -131,6 +137,12 @@ fun readInputFast() {
         wRemainingPoints = wRemainingPoints.filter { !laser.contains(it) } as ArrayList<PointVector>
 
         fire(laser.getLaser(fMin, fMax, rFoc))
+
+        /*
+        if(wRemainingPoints.isNotEmpty())
+            println("Remaining: ${wRemainingPoints[0]}")
+
+         */
 
     }
 

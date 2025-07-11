@@ -3,7 +3,12 @@ class PointsCloud (val uPoints: List<PointVector>, // полезно разст�
                    val bPoints: List<PointVector>, // камък
 ){
     fun calculateManipulatorTrajectory(manipulator: Cylinder, potentialManipulator: Cylinder): List<Cylinder>? {
-        return tryDirectMovement(manipulator, potentialManipulator)
+        var direct = tryDirectMovement(manipulator, potentialManipulator)
+        if (direct?.isNotEmpty() == true)
+            return direct
+        else { // Modified A* https://iopscience.iop.org/article/10.1088/1757-899X/928/3/032016/pdf
+            return AStar.calculate(this, manipulator, potentialManipulator)
+        }
     }
 
     fun tryDirectMovement(from: Cylinder, to: Cylinder): List<Cylinder>? {

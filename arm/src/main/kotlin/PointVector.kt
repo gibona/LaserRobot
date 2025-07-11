@@ -4,6 +4,10 @@ import kotlin.math.sqrt
 
 data class PointVector(val x: Double, val y: Double, val z: Double) {
 
+    override fun hashCode(): Int {
+        return (x * 10000).toInt() + (y * 10000).toInt() + (z * 10000).toInt()
+    }
+
     override fun toString(): String {
         return "($x, $y, $z)"
     }

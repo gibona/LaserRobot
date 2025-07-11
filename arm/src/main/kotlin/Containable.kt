@@ -4,6 +4,7 @@ interface Containable {
 
     fun contains(points: List<PointVector>): Boolean {
         //TODO: Multithreading
+        //TODO: OctaTree (2D QuadTree equivalent like https://medium.com/@hakizimanafreddoctype/simplifying-quad-tree-indexing-b53f0a72d508
         for(p in points)
             if(contains(p))
                 return true

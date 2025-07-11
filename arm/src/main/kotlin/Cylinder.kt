@@ -99,6 +99,12 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
         return centerPoint.absSq() in rMin*rMin .. rMax*rMax
     }
 
+    fun moveToCenterPoint(newCenterPoint: PointVector): Cylinder {
+        var diff = newCenterPoint - centerPoint
+        return Cylinder(start + diff, end + diff, radius)
+
+    }
+
     companion object {
         @Test
         fun testContains() {
@@ -148,6 +154,15 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             assert(fromLaser.parallelTo(laser))
             assert(laser.parallelTo(fromLaser))
             assert(manipulator.parallelTo(fromLaser))
+        }
+
+        @Test
+        fun testMove() {
+            val cylinder = Cylinder(PointVector(0.0, 0.0, 0.0), PointVector(10.0, 0.0, 0.0), 0.5)
+            val moved = cylinder.moveToCenterPoint(PointVector(1.0, 1.0, 1.0))
+
+            assert(moved.start == PointVector(-4.0, 1.0, 1.0)) {moved}
+            assert(moved.end == PointVector(6.0, 1.0, 1.0)) {moved}
         }
 
     }
