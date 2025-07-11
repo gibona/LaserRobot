@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "1.7.10"
     java
     application
 }
@@ -26,8 +26,7 @@ allprojects {
 dependencies {
     implementation("org.testng:testng:7.1.0")
     testImplementation(kotlin("test"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2")
-    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-async:1.10.2")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
     //implementation("org.jetbrains.kotlin:kotlin-runtime")
     //implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }

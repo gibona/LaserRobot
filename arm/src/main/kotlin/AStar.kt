@@ -1,9 +1,12 @@
-import java.util.PriorityQueue
+
+import java.util.*
+import kotlin.collections.ArrayDeque
+import kotlin.collections.set
 
 class AStar {
     class Cost(var numberOfMovements: Int, var distance: Double) : Comparable<AStar.Cost> {
         override fun compareTo(other: AStar.Cost): Int {
-            if (numberOfMovements === other.numberOfMovements)
+            if (numberOfMovements == other.numberOfMovements)
                 return distance.compareTo(other.distance)
             return numberOfMovements.compareTo(other.numberOfMovements)
         }

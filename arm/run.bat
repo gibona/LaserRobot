@@ -1,0 +1,1 @@
+java -jar C:\DEV\Robot\arm\out\artifacts\robot\RoboticArm.jar
