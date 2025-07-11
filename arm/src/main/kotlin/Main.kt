@@ -44,10 +44,9 @@ fun readNextLineAndSplit(input: BufferedReader): List<String> {
     return line.split(" ")
 
 }
-fun readInputFast() {
+fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     var t1 = System.currentTimeMillis()
-    val fileIn = File("RoboticArm.in")
-    val input = BufferedReader(InputStreamReader(FileInputStream(fileIn)))
+
 
     var line = readNextLineAndSplit(input)
     val rMin = line[0].toDouble()
@@ -124,19 +123,19 @@ fun readInputFast() {
         }
 
         if(bestTrajectory.isNullOrEmpty()) { // няма как да стигнем до 0-левата точка
-            println("Nema pat do ${wRemainingPoints[0]}")
+            //println("Nema pat do ${wRemainingPoints[0]}")
             wRemainingPoints.removeAt(0)
             continue
         }
 
-        move(bestTrajectory)
+        move(bestTrajectory, output)
         var laser = bestTrajectory.last().getLaser(fMin, fMax, rFoc)
 
 
         // TODO: Multithreading
         wRemainingPoints = wRemainingPoints.filter { !laser.contains(it) } as ArrayList<PointVector>
 
-        fire(laser.getLaser(fMin, fMax, rFoc))
+        fire(laser.getLaser(fMin, fMax, rFoc), output)
 
         /*
         if(wRemainingPoints.isNotEmpty())
@@ -149,30 +148,41 @@ fun readInputFast() {
 
 }
 
-fun fire(l: Cylinder) {
-    var fire = "FIRE"
+fun fire(l: Cylinder, output: OutputStreamWriter) {
+    var fire = "FIRE\r"
     /*
     fire = String.format("FIRE %.4f %.4f %.4f %.4f %.4f %.4f",
         l.start.x, l.start.y, l.start.z,
         l.end.x, l.end.y, l.end.z,
     )
      */
-    println(fire)
+    output.write(fire)
 }
 
-fun move(trajectory: List<Cylinder>) {
+fun move(trajectory: List<Cylinder>, output: OutputStreamWriter) {
     for (t in trajectory) {
-        val move = String.format("MOVE %.4f %.4f %.4f %.4f %.4f %.4f",
+        val move = String.format("MOVE %.4f %.4f %.4f %.4f %.4f %.4f\n",
             t.start.x, t.start.y, t.start.z,
             t.end.x, t.end.y, t.end.z,
         )
-        println(move)
+        output.write(move)
     }
 }
 
 fun main(args: Array<String>) {
 
-    readInputFast()
+    val fileIn = File("RoboticArm.in")
+    var fileOut = File("RoboticArm.out")
+    var output = OutputStreamWriter(FileOutputStream(fileOut))
+    val input = BufferedReader(InputStreamReader(FileInputStream(fileIn)))
+    try {
+        readInputFast(input, output)
+    } catch (t: Throwable) {
+        t.printStackTrace()
+    } finally {
+        output.close()
+        input.close()
+    }
 
     /*
     for(i in 0 until 1000000) {
