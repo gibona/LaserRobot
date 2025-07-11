@@ -1,6 +1,3 @@
-import java.util.concurrent.Executors
-import kotlinx.coroutines.*
-
 interface Containable {
 
     fun contains(point: PointVector) : Boolean
@@ -11,17 +8,6 @@ interface Containable {
         for(p in points)
             if(contains(p))
                 return true
-
-/*
-        async
-
-        points.chunked(1000).mapIndexed { chunkIndex, chunk ->
-        async {
-            for(p in points)
-                if(contains(p))
-                    return@async true
-            }
-        }.*/
         return false
     }
     fun contains(pointsCloud: PointsCloud): Boolean {
@@ -44,9 +30,5 @@ interface Containable {
             if(contains(p))
                 result++
         return result
-    }
-
-    companion object {
-        private val dispatcher = Executors.newFixedThreadPool(4)
     }
 }

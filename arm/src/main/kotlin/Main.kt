@@ -1,6 +1,8 @@
+
 import java.io.*
 import java.util.*
-import kotlin.collections.ArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 const val EPS = 0.0001
 fun log(string : String) {
@@ -191,4 +193,53 @@ fun main(args: Array<String>) {
         var z = Math.random()+200
         System.out.println("$x $y $z")
     }*/
+}
+
+fun testParallel() {
+    val dispatcher = Executors.newFixedThreadPool(4)
+    var numbers = 1 .. 100000000
+    var chunks = numbers.asIterable().chunked((numbers.count()/4)+1)
+
+    var lookFor = numbers.last -1
+
+    var t0 = System.currentTimeMillis()
+    for(n in numbers)
+        if (n == lookFor)
+            break
+
+    var t1 = System.currentTimeMillis()
+    println("Normal " +(t1-t0))
+
+    var contains = false;
+    val barrier = CountDownLatch(chunks.size)
+    for(chunk in chunks) {
+        dispatcher.submit {
+            println("Start ${chunk[0]} " + Thread.currentThread().id)
+            for (p in chunk) {
+                //println(p)
+                //if (contains(p))
+                if (p == lookFor)
+                    contains = true
+
+                if (contains) {
+                    barrier.countDown()
+                    return@submit
+                }
+            }
+            barrier.countDown()
+        }
+    }
+
+    var t2 = System.currentTimeMillis()
+    println("Await" +(t2-t1))
+
+    barrier.await()
+
+
+    println(contains )
+
+    var t3 = System.currentTimeMillis()
+    println("Done" +(t3-t2))
+
+    return
 }
