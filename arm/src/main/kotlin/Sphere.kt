@@ -28,7 +28,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
      * точките се сортират по оста на двата цилиндъра и за всяко възможно пресичане
      * (горна/долна част на цилиндър - лазер или плевящ инструмент) се пресмята колко е оптимална
      */
-    fun generateFibonacciSphere(cylynderHeight: Double, samples:Int = SAMPLES_FIBONACCI) : ArrayList<Cylinder> {
+    fun generateFibonacciSphere(cylynderHeight: Double, rFoc:Double,  samples:Int = SAMPLES_FIBONACCI) : ArrayList<Cylinder> {
         var result = ArrayList<Cylinder>(samples*3)
 
         var phi = Math.PI * (sqrt(5.0) - 1.0)  // golden angle in radians
@@ -48,17 +48,17 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
             result.add(Cylinder(
                 center - directionReal * (cylynderHeight - radius),
                 center + directionReal * (radius),
-                radius))
+                rFoc))
 
             result.add(Cylinder(
                 center - directionReal * (cylynderHeight / 2.0),
                 center + directionReal * (cylynderHeight / 2.0),
-                radius))
+                rFoc))
 
             result.add(Cylinder(
                 center - directionReal * (radius),
                 center + directionReal * (cylynderHeight - radius),
-                radius))
+                rFoc))
         }
 
         return result
@@ -89,7 +89,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
         @Test
         fun testFibonacciSphere() {
             val sphere = Sphere(PointVector(0.0,0.0,0.0), 2.0)
-            var cylinders = sphere.generateFibonacciSphere(5.0, 2)
+            var cylinders = sphere.generateFibonacciSphere(5.0, 2.0,2)
 
             assert(cylinders[0] == Cylinder(PointVector(0.0, -3.0, 0.0), PointVector(0.0, 2.0, 0.0), 2.0)) {cylinders[0]}
             assert(cylinders[1] == Cylinder(PointVector(0.0, -2.5, 0.0), PointVector(0.0, 2.5, 0.0), 2.0)) {cylinders[1]}
@@ -111,14 +111,14 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
             if (wPointVectors.size == 1)
                 return Sphere(wPointVectors[0], EPS)
 
-            val maximumRadiusSq = maximumRadius * maximumRadius
+            val maximumDiameterSq = maximumRadius * maximumRadius * 4.0
             var p0 = wPointVectors[0];
             var p1: PointVector? = null
             var maximumDistance = 0.0
             // find point p1 farthest from p0, but not farther than maximumRadius
             for(p in wPointVectors) { // can be multithreaded!
                 val distance = (p0-p).absSq()
-                if (distance > maximumDistance && distance <= maximumRadiusSq) {
+                if (distance > maximumDistance && distance <= maximumDiameterSq) {
                     maximumDistance = distance
                     p1 = p
                 }
@@ -131,7 +131,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
             maximumDistance = 0.0
             for(p in wPointVectors) { // can be multithreaded!
                 val distance = (p1-p).absSq()
-                if (distance > maximumDistance && distance <= maximumRadiusSq) {
+                if (distance > maximumDistance && distance <= maximumDiameterSq) {
                     maximumDistance = distance
                     p2 = p
                 }
@@ -142,7 +142,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
 
             var x = (p1.x + p2.x) / 2.0
             var y = (p1.y + p2.y) / 2.0
-            var z = (p1.x + p2.x) / 2.0
+            var z = (p1.z + p2.z) / 2.0
             var rsq = maximumDistance / 4.0
             var r = sqrt(rsq)
 
@@ -151,7 +151,7 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
                 val dy = p.y - y
                 val dz = p.z - z
                 val dsq = dx * dx + dy * dy + dz * dz
-                if (dsq > rsq && dsq <= maximumRadiusSq) {
+                if (dsq > rsq && dsq <= (maximumDiameterSq/4.0)) {
                     var d = sqrt(dsq)
                     r = (r + d) / 2.0
                     val factor = r / d

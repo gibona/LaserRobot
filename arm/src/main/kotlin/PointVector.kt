@@ -58,6 +58,10 @@ data class PointVector(val x: Double, val y: Double, val z: Double) {
             return pointVectors
         }
 
+        fun read(line: List<String>, index: Int = 0): PointVector {
+            return PointVector(line[0 + index].toDouble(), line[1 + index].toDouble(), line[2 + index].toDouble())
+        }
+
         fun read(reader: BufferedReader): PointVector {
             var line = readNextLineAndSplit(reader)
             return PointVector(line[0].toDouble(), line[1].toDouble(), line[2].toDouble())

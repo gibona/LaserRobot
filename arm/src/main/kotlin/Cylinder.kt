@@ -53,9 +53,9 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
 
     fun parallelTo(another: Cylinder) : Boolean {
         val direction = start - end
-        val anotherDirection = another.start - end
+        val anotherDirection = another.start - another.end
         val crossProduct = PointVector.crossProduct(direction, anotherDirection)
-        return crossProduct.absSq() == 0.0
+        return crossProduct.absSq() < EPS
     }
     /**
      * Описана сфера
@@ -155,6 +155,28 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             assert(laser.parallelTo(fromLaser))
             assert(manipulator.parallelTo(fromLaser))
         }
+        @Test
+        fun testLaser() {
+            val manipulator = Cylinder(PointVector(-52.5469, -55.0991, 48.6102), PointVector(-73.5171, -57.8263, 69.8896), 30.0)
+            var fMin = 5.0
+            val laser = manipulator.getLaser(fMin, 10.0, 6.0);
+            var fromLaser = laser.getManipulator(fMin, manipulator.length(), manipulator.radius)
+
+            assert(manipulator.parallelTo(laser))
+            assert(fromLaser.parallelTo(laser))
+            assert(laser.parallelTo(fromLaser))
+            assert(manipulator.parallelTo(fromLaser))
+
+
+            val p1 = PointVector(-47.36,	-50.01,	44.41)
+            val p2 = PointVector(-42.37,	-58.19,	37.22)
+            val p3 = PointVector(-43.86,	-48.58,	39.91)
+            assert(laser.contains(p1))
+            assert(laser.contains(p2))
+            assert(laser.contains(p3))
+        }
+
+
 
         @Test
         fun testMove() {

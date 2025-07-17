@@ -1,9 +1,11 @@
 
+import com.google.common.primitives.Doubles.min
 import java.io.*
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
+const val PRINT_DEBUG = false
 const val EPS = 0.0001
 const val SAMPLES_FIBONACCI = 100
 fun log(string : String) {
@@ -48,6 +50,8 @@ fun readNextLineAndSplit(input: BufferedReader): List<String> {
 
 }
 fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
+
+    //Cylinder.testLaser()
     var t1 = System.currentTimeMillis()
 
 
@@ -63,8 +67,9 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     val rFoc = line[3].toDouble()
     log("rInst:$rInst, fMin:$fMin, fMax:$fMax, rFoc:$rFoc")
 
-    val pointF = PointVector.read(input)
-    val pointB = PointVector.read(input)
+    var manipulatorInput = readNextLineAndSplit(input)
+    val pointF = PointVector.read(manipulatorInput)
+    val pointB = PointVector.read(manipulatorInput, 3)
     val manipulator = Cylinder(pointF, pointB, rInst)
     log("F:$pointF, B:$pointB")
 
@@ -81,12 +86,18 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     val pointsCloud = PointsCloud(uPoints, wPoints, bPoints)
 
     var t2 = System.currentTimeMillis();
-    //System.out.println("reading:" + (t2 - t1))
+    if (PRINT_DEBUG)
+        System.out.println("reading:" + (t2 - t1))
+    if (PRINT_DEBUG)
+        println("uPoints ${uPoints.size}  wPoints:${wPoints.size}  bPoints:${bPoints.size}")
+
 
     var wRemainingPoints = ArrayList<PointVector>(wPoints) // copy points
 
     while(wRemainingPoints.isNotEmpty()) {
-        var potentialTarget = Sphere.fromPoints(wRemainingPoints, rFoc) // опитваме се да групираме плевели в сфера и да го облъчим
+        if (PRINT_DEBUG)
+            println("Left: ${wRemainingPoints.size}")
+        var potentialTarget = Sphere.fromPoints(wRemainingPoints, min(rFoc, (fMax-fMin)/2.0)) // опитваме се да групираме плевели в сфера и да го облъчим
         if (potentialTarget.contains(uPoints)) { // има полезни разстения в сферата - не става за облъчване
             potentialTarget = Sphere(wRemainingPoints[0], EPS) // фокусираме се само на тази точка
             if (potentialTarget.contains(uPoints)) { // няма как да я облъчим без да засегнем полезни разстения - махаме я
@@ -95,9 +106,12 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
             }
         }
 
+        if (PRINT_DEBUG)
+            println("Inside: " + potentialTarget.countInside(wRemainingPoints))
+
         var bestTargetPoints = 0
         var bestTrajectory: List<Cylinder>? = null
-        var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin)
+        var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin, rFoc)
 
 
         for(laser in lasers) {
@@ -122,6 +136,8 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
                 if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
                     bestTrajectory = trajectory
                     bestTargetPoints = targetPoints
+                    // TODO: use break - we don't need optimal solution, just a solution
+                    // break;
                 }
         }
 
@@ -134,6 +150,11 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
         move(bestTrajectory, output)
         var laser = bestTrajectory.last().getLaser(fMin, fMax, rFoc)
 
+        if (PRINT_DEBUG)
+            wRemainingPoints.forEach {
+                if (laser.contains(it))
+                    println("Eliminating: $it")
+            }
 
         // TODO: Multithreading
         wRemainingPoints = wRemainingPoints.filter { !laser.contains(it) } as ArrayList<PointVector>
@@ -159,6 +180,8 @@ fun fire(l: Cylinder, output: OutputStreamWriter) {
         l.end.x, l.end.y, l.end.z,
     )
      */
+    if (PRINT_DEBUG)
+        println(fire)
     output.write(fire)
 }
 
@@ -168,6 +191,8 @@ fun move(trajectory: List<Cylinder>, output: OutputStreamWriter) {
             t.start.x, t.start.y, t.start.z,
             t.end.x, t.end.y, t.end.z,
         )
+        if (PRINT_DEBUG)
+            println(move)
         output.write(move)
     }
 }
