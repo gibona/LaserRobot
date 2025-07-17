@@ -1,6 +1,5 @@
-
-import com.google.common.primitives.Doubles.min
 import java.io.*
+import java.lang.Double.min
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -200,10 +199,9 @@ fun fire(l: Cylinder, output: OutputStreamWriter) {
 
 fun move(trajectory: List<Cylinder>, output: OutputStreamWriter) {
     for (t in trajectory) {
-        val move = String.format("MOVE %.4f %.4f %.4f %.4f %.4f %.4f\n",
+        val move = String.format(Locale.US, "MOVE %.4f %.4f %.4f %.4f %.4f %.4f\n",
             t.start.x, t.start.y, t.start.z,
-            t.end.x, t.end.y, t.end.z,
-        )
+            t.end.x, t.end.y, t.end.z)
         if (PRINT_DEBUG)
             println(move)
         output.write(move)

@@ -1,5 +1,5 @@
-import com.google.common.primitives.Doubles.max
-import com.google.common.primitives.Doubles.min
+import java.lang.Double.max
+import java.lang.Double.min
 
 class OctaPointsTree : ContainedIn, PointsCollection {
 
