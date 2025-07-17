@@ -1,6 +1,8 @@
 interface Containable {
 
     fun contains(point: PointVector) : Boolean
+    fun getMaxXYZ() : PointVector
+    fun getMinXYZ() : PointVector
 
     fun contains(points: List<PointVector>): Boolean {
         //TODO: Multithreading
@@ -10,21 +12,16 @@ interface Containable {
                 return true
         return false
     }
-    fun contains(pointsCloud: PointsCloud): Boolean {
-        if(contains(pointsCloud.uPoints))
-            return true
 
-        if(contains(pointsCloud.wPoints))
-            return true
+    fun contains(pointStructure: ContainedIn):Boolean {
+        return pointStructure.containedIn(this)
+    }
 
-        if(contains(pointsCloud.bPoints))
-            return true
-
-        return false
+    fun countInside(pointStructure: ContainedIn) :Int {
+        return pointStructure.countIn(this)
     }
 
     fun countInside(points: List<PointVector>): Int {
-        //TODO: Multithreading
         var result = 0
         for(p in points)
             if(contains(p))

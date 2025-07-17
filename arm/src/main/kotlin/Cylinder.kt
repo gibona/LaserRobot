@@ -6,6 +6,9 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
     private val radiusSq: Double by lazy { radius * radius }
     private val height: Double by lazy { (start - end).abs() }
     val centerPoint: PointVector by lazy { (start + end) / 2.0 }
+    private val maxXYZv: PointVector by lazy { toBoundingSphere().getMaxXYZ() }
+    private val minXYZv: PointVector by lazy { toBoundingSphere().getMinXYZ() }
+
 
     override fun toString(): String {
         return "F: $start, B:$end r:$radius"
@@ -45,6 +48,14 @@ data class Cylinder (val start:PointVector, val end: PointVector, val radius: Do
             return false
 
         return true
+    }
+
+    override fun getMaxXYZ(): PointVector {
+        return maxXYZv;
+    }
+
+    override fun getMinXYZ(): PointVector {
+        return minXYZv;
     }
 
     private fun length(): Double {

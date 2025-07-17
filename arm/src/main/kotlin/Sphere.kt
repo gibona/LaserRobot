@@ -13,6 +13,17 @@ data class Sphere(val center: PointVector, val radius: Double) : Containable {
         return distanceFromCenter.absSq() <= radiusSq
     }
 
+    private val maxXYZv: PointVector by lazy { center + PointVector(radius, radius,radius) }
+    private val minXYZv: PointVector by lazy { center - PointVector(radius, radius,radius) }
+
+    override fun getMaxXYZ(): PointVector {
+        return maxXYZv;
+    }
+
+    override fun getMinXYZ(): PointVector {
+        return minXYZv;
+    }
+
     /**
      * Генерира samples * 3 цилиндъра, които са разпраделени в 3 групи:
      * 1. цилиндър с център съвпадащ със сферата

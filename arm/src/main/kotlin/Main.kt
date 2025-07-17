@@ -51,7 +51,7 @@ fun readNextLineAndSplit(input: BufferedReader): List<String> {
 }
 fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
 
-    //Cylinder.testLaser()
+//    ListTreeComparator.testImplementations()
     var t1 = System.currentTimeMillis()
 
 
@@ -79,9 +79,22 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     var nB = line[2].toInt()
     log("nU:$nU, nW:$nW, nB:$nB")
 
-    val uPoints = PointVector.readMultiple(input, nU) // полезно разстение
-    val wPoints = PointVector.readMultiple(input, nW) // плевел
-    val bPoints = PointVector.readMultiple(input, nB) // камък
+    val uuPoints = PointVector.readMultiple(input, nU) // полезно разстение
+    val wwPoints = PointVector.readMultiple(input, nW) // плевел
+    val bbPoints = PointVector.readMultiple(input, nB) // камък
+
+    OctaPointsTree.setMinGranularity(min(rFoc, (fMax-fMin)/2.0))
+
+    val uPoints = OctaPointsTree(uuPoints)
+    val wPoints = OctaPointsTree(wwPoints)
+    val bPoints = OctaPointsTree(bbPoints)
+
+    //used for comparing both implementations
+//    val uPoints = ListTreeComparator(ListWrapper(uuPoints), OctaPointsTree(uuPoints))
+//    val wPoints = ListTreeComparator(ListWrapper(wwPoints), OctaPointsTree(wwPoints))
+//    val bPoints = ListTreeComparator(ListWrapper(bbPoints), OctaPointsTree(bbPoints))
+    //val wRemainingPoints = ListTreeComparator(ListWrapper(wwPoints), OctaPointsTree(wwPoints))
+    //println(uPoints.toString())
 
     val pointsCloud = PointsCloud(uPoints, wPoints, bPoints)
 
@@ -92,7 +105,7 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
         println("uPoints ${uPoints.size}  wPoints:${wPoints.size}  bPoints:${bPoints.size}")
 
 
-    var wRemainingPoints = ArrayList<PointVector>(wPoints) // copy points
+    var wRemainingPoints = ArrayList<PointVector>(wwPoints) // copy points
 
     while(wRemainingPoints.isNotEmpty()) {
         if (PRINT_DEBUG)
@@ -136,8 +149,8 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
                 if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
                     bestTrajectory = trajectory
                     bestTargetPoints = targetPoints
-                    // TODO: use break - we don't need optimal solution, just a solution
-                    // break;
+                    // TODO: don't use break if you need optimal result - we don't need optimal solution, just a solution
+                     break;
                 }
         }
 

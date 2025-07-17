@@ -1,7 +1,7 @@
-class PointsCloud (val uPoints: List<PointVector>, // полезно разстение
-                   val wPoints: List<PointVector>, // плевел
-                   val bPoints: List<PointVector>, // камък
-){
+class PointsCloud (private val uPoints: ContainedIn, // полезно разстение
+                   private val wPoints: ContainedIn, // плевел
+                   private val bPoints: ContainedIn, // камък
+): ContainedIn{
     fun calculateManipulatorTrajectory(manipulator: Cylinder, potentialManipulator: Cylinder): List<Cylinder>? {
         var direct = tryDirectMovement(manipulator, potentialManipulator)
         if (direct?.isNotEmpty() == true)
@@ -57,6 +57,23 @@ class PointsCloud (val uPoints: List<PointVector>, // полезно разст�
             return listOf(to)
 
        return null
+    }
+
+    override fun containedIn(figure: Containable): Boolean {
+        if (uPoints.containedIn(figure))
+            return true
+
+        if (bPoints.containedIn(figure))
+            return true
+
+        if (wPoints.containedIn(figure))
+            return true
+
+        return false
+    }
+
+    override fun countIn(figure: Containable): Int {
+        return uPoints.countIn(figure) + bPoints.countIn(figure) + wPoints.countIn(figure)
     }
 
 }
