@@ -1,3 +1,4 @@
+
 import java.io.*
 import java.lang.Double.min
 import java.util.*
@@ -76,7 +77,7 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     }
 
     val pointB = PointVector.read(manipulatorInput, startingIndex)
-    val manipulator = Cylinder(pointF, pointB, rInst)
+    var manipulator = Cylinder(pointF, pointB, rInst)
     log("F:$pointF, B:$pointB")
 
     line = readNextLineAndSplit(input)
@@ -86,8 +87,10 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
     log("nU:$nU, nW:$nW, nB:$nB")
 
     val uuPoints = PointVector.readMultiple(input, nU) // полезно разстение
-    val wwPoints = PointVector.readMultiple(input, nW) // плевел
+    var wwPoints = PointVector.readMultiple(input, nW) // плевел
     val bbPoints = PointVector.readMultiple(input, nB) // камък
+
+    //wwPoints = wwPoints.chunked(10000)[0] as ArrayList<PointVector>
 
     OctaPointsTree.setMinGranularity(min(rFoc, (fMax-fMin)/2.0))
 
@@ -133,8 +136,8 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
         var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin, rFoc)
 
 
+        var lasersPoints = ArrayList<Targets>()
         for((i, laser) in lasers.withIndex()) {
-
             if (PRINT_DEBUG)
                 println("Laser cycle: $i")
 
@@ -145,21 +148,35 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
             if (PRINT_DEBUG)
                 println("Laser cycle 1: $i")
 
-            val targetPoints = laser.countInside(wRemainingPoints)
-            if (bestTargetPoints > targetPoints) // вече сме намерили по-добра позиция
-                continue
-
             if (PRINT_DEBUG)
                 println("Laser cycle 2: $i")
 
             var potentialManipulator = laser.getManipulator(fMin, manipulator.height(), manipulator.radius)
-            if ( !potentialManipulator.inWorkingArea(rMin, rMax)
-                || potentialManipulator.contains(pointsCloud)) // манипулатора засяга точкиплевел
+            if (!potentialManipulator.inWorkingArea(rMin, rMax)
+                || potentialManipulator.contains(pointsCloud)
+            ) // манипулатора засяга точкиплевел
                 continue
 
+            val targetPoints = laser.countInside(wRemainingPoints)
+
+            lasersPoints.add(Targets(laser, potentialManipulator, targetPoints))
+
+        }
+
+
+        if (PRINT_DEBUG)
+            println("preSorted: " + lasersPoints)
+
+        lasersPoints.sort()
+
+        if (PRINT_DEBUG)
+            println("Sorted: " + lasersPoints)
+
+        // try direct
+        for((i, laser) in lasersPoints.withIndex()) {
             if (PRINT_DEBUG)
                 println("Laser cycle 3: $i")
-            var trajectory = pointsCloud.calculateManipulatorTrajectory(manipulator, potentialManipulator)
+            var trajectory = pointsCloud.tryDirectMovement(manipulator, laser.potentialManipulator)
 
             if (PRINT_DEBUG)
                 println("Laser cycle 4: $i")
@@ -167,10 +184,32 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
             if (trajectory != null)
                 if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
                     bestTrajectory = trajectory
-                    bestTargetPoints = targetPoints
+                    bestTargetPoints = laser.targetPoints
                     // TODO: don't use break if you need optimal result - we don't need optimal solution, just a solution
                      break;
                 }
+        }
+
+        //try aStar
+        if (bestTrajectory == null) {
+            for ((i, laser) in lasersPoints.withIndex()) {
+
+
+                if (PRINT_DEBUG)
+                    println("Laser cycle 3: $i")
+                var trajectory = AStar.calculate(pointsCloud, manipulator, laser.potentialManipulator)
+
+                if (PRINT_DEBUG)
+                    println("Laser cycle 4: $i")
+
+                if (trajectory != null)
+                    if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
+                        bestTrajectory = trajectory
+                        bestTargetPoints = laser.targetPoints
+                        // TODO: don't use break if you need optimal result - we don't need optimal solution, just a solution
+                        break;
+                    }
+            }
         }
 
         if (PRINT_DEBUG)
@@ -195,6 +234,9 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
         wRemainingPoints.removeAll { laser.contains(it) }
 
         fire(laser.getLaser(fMin, fMax, rFoc), output)
+
+        //move the manipulator to the current position
+        manipulator = bestTrajectory.last()
 
         /*
         if(wRemainingPoints.isNotEmpty())
@@ -232,7 +274,6 @@ fun move(trajectory: List<Cylinder>, output: OutputStreamWriter) {
 }
 
 fun main(args: Array<String>) {
-
     val fileIn = File("RoboticArm.in")
     var fileOut = File("RoboticArm.out")
     var output = OutputStreamWriter(FileOutputStream(fileOut))

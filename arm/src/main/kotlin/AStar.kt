@@ -75,10 +75,13 @@ class AStar {
                 var current = frontier.poll()
 
                 if (PRINT_DEBUG)
-                    println("curerent: $current")
+                    println("current: $current")
 
                 if(visited.contains(current.point))
                     continue
+
+                if (PRINT_DEBUG)
+                    println("calculating neighbours: $current")
 
                 maxIteration++
 
@@ -110,6 +113,8 @@ class AStar {
                     }
                 }
 
+                if (PRINT_DEBUG)
+                    println("neighbours.size: ${neighbours.size}")
 
                 for (next in neighbours) {
                     val manipulatorNext = currentManipulator.moveToCenterPoint(next)

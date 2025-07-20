@@ -1,3 +1,5 @@
+
+import org.testng.annotations.Test
 import java.io.BufferedReader
 import java.util.*
 import kotlin.math.sqrt
@@ -10,6 +12,12 @@ data class PointVector(val x: Double, val y: Double, val z: Double) {
 
     override fun toString(): String {
         return "($x, $y, $z)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other is PointVector)
+            return (this - other).absSq() < EPS
+        return super.equals(other)
     }
 
     operator fun plus(other: PointVector) : PointVector {
@@ -87,6 +95,18 @@ data class PointVector(val x: Double, val y: Double, val z: Double) {
 
         fun dotProduct(a: PointVector, b: PointVector): Double {
             return a.x * b.x + a.y * b.y + a.z * b.z
+        }
+
+        @Test
+        fun equalsSimilarPoints() {
+            val p1 = PointVector(-39.05124837953329, 39.05124837953322, -14.051248379533291)
+            val p2 = PointVector(-39.05124837953329, 39.05124837953325, -14.051248379533291)
+            val p3 = PointVector(-39.05124837953329, 39.05124837953319, -14.051248379533291)
+            val map = HashMap<PointVector, Boolean>()
+            map[p1] = true
+            map[p2] = true
+            map[p3] = true
+            assert(map.size == 1) { "${map.size} should be 1"}
         }
     }
 }
