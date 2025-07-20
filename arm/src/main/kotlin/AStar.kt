@@ -74,7 +74,8 @@ class AStar {
             while(frontier.isNotEmpty()) {
                 var current = frontier.poll()
 
-                //println(current)
+                if (PRINT_DEBUG)
+                    println("curerent: $current")
 
                 if(visited.contains(current.point))
                     continue

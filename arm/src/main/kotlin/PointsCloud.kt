@@ -4,6 +4,10 @@ class PointsCloud (private val uPoints: ContainedIn, // полезно разс�
 ): ContainedIn{
     fun calculateManipulatorTrajectory(manipulator: Cylinder, potentialManipulator: Cylinder): List<Cylinder>? {
         var direct = tryDirectMovement(manipulator, potentialManipulator)
+
+        if (PRINT_DEBUG)
+            println("direct -> $direct")
+
         if (direct?.isNotEmpty() == true)
             return direct
         else { // Modified A* https://iopscience.iop.org/article/10.1088/1757-899X/928/3/032016/pdf

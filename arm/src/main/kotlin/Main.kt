@@ -68,7 +68,14 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
 
     var manipulatorInput = readNextLineAndSplit(input)
     val pointF = PointVector.read(manipulatorInput)
-    val pointB = PointVector.read(manipulatorInput, 3)
+
+    var startingIndex = 3
+    if (manipulatorInput.size < 6) {
+        manipulatorInput = readNextLineAndSplit(input)
+        startingIndex = 0
+    }
+
+    val pointB = PointVector.read(manipulatorInput, startingIndex)
     val manipulator = Cylinder(pointF, pointB, rInst)
     log("F:$pointF, B:$pointB")
 
@@ -126,24 +133,37 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
         var lasers = potentialTarget.generateFibonacciSphere(fMax-fMin, rFoc)
 
 
-        for(laser in lasers) {
+        for((i, laser) in lasers.withIndex()) {
 
-            //println("Laser cycle: $i")
+            if (PRINT_DEBUG)
+                println("Laser cycle: $i")
 
             val harmPlants = laser.contains(uPoints)
             if (harmPlants) // без да облъчваме разстения
                 continue
 
+            if (PRINT_DEBUG)
+                println("Laser cycle 1: $i")
+
             val targetPoints = laser.countInside(wRemainingPoints)
             if (bestTargetPoints > targetPoints) // вече сме намерили по-добра позиция
                 continue
+
+            if (PRINT_DEBUG)
+                println("Laser cycle 2: $i")
 
             var potentialManipulator = laser.getManipulator(fMin, manipulator.height(), manipulator.radius)
             if ( !potentialManipulator.inWorkingArea(rMin, rMax)
                 || potentialManipulator.contains(pointsCloud)) // манипулатора засяга точкиплевел
                 continue
 
+            if (PRINT_DEBUG)
+                println("Laser cycle 3: $i")
             var trajectory = pointsCloud.calculateManipulatorTrajectory(manipulator, potentialManipulator)
+
+            if (PRINT_DEBUG)
+                println("Laser cycle 4: $i")
+
             if (trajectory != null)
                 if (bestTrajectory.isNullOrEmpty() || bestTrajectory.size > trajectory.size) {
                     bestTrajectory = trajectory
@@ -152,6 +172,9 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
                      break;
                 }
         }
+
+        if (PRINT_DEBUG)
+            println("Laser cycle 4:")
 
         if(bestTrajectory.isNullOrEmpty()) { // няма как да стигнем до 0-левата точка
             //println("Nema pat do ${wRemainingPoints[0]}")
@@ -169,7 +192,7 @@ fun readInputFast(input: BufferedReader, output: OutputStreamWriter) {
             }
 
         // TODO: Multithreading
-        wRemainingPoints = wRemainingPoints.filter { !laser.contains(it) } as ArrayList<PointVector>
+        wRemainingPoints.removeAll { laser.contains(it) }
 
         fire(laser.getLaser(fMin, fMax, rFoc), output)
 
